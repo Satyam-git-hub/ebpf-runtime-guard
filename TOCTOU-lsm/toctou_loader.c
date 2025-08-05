@@ -270,7 +270,7 @@ static int handle_toctou_event(void *ctx, void *data, size_t data_sz) {
     if (e->is_toctou) {
         toctou_attacks_detected++;
         printf("  🚨 *** TOCTOU ATTACK DETECTED *** 🚨\n");
-        printf("  🔥 Attack #%d - File was modified between check and use!\n", 
+        printf("  🔥 Attack #%d - modified between check and use!\n", 
                toctou_attacks_detected);
         printf("  ⚡ Timestamp: %llu\n", e->timestamp);
     } else {
@@ -284,7 +284,7 @@ static int handle_toctou_event(void *ctx, void *data, size_t data_sz) {
 static int check_lsm_support() {
     FILE *f = fopen("/sys/kernel/security/lsm", "r");
     if (!f) {
-        printf("❌ Cannot access LSM information\n");
+        printf(" Cannot access LSM information\n");
         return -1;
     }
     
@@ -296,7 +296,7 @@ static int check_lsm_support() {
     fclose(f);
     
     if (!strstr(lsm_list, "bpf")) {
-        printf("❌ BPF LSM is not active. Current LSMs: %s", lsm_list);
+        printf(" BPF LSM is not active. Current LSMs: %s", lsm_list);
         return -1;
     }
     

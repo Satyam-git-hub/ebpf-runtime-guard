@@ -15,19 +15,31 @@ A comprehensive eBPF-based security monitoring system that detects **TOCTOU (Tim
 
 ```
 .
+├── TOCTOU-lsm/                          # TOCTOU detection module
+│   ├── Makefile                         # Build configuration for TOCTOU
+│   ├── bpf_toctou_detector.bpf.c        # eBPF program for TOCTOU detection
+│   ├── bpf_toctou_detector.o            # Compiled eBPF object
+│   ├── toctou_loader                    # User-space loader executable
+│   ├── toctou_loader.c                  # User-space loader source
+│   ├── enhanced_toctou_test             # Enhanced test executable
+│   ├── enhanced_toctou_test.c           # Enhanced TOCTOU attack test suite
+│   ├── test_framework                   # Test framework executable
+│   ├── test_framework.c                 # Comprehensive test framework
+│   ├── monitoring_toctou.sh             # Monitoring automation script
+│   ├── run_toctou_tests.sh              # Test runner script
+│   └── vmlinux.h                        # Kernel headers
 ├── LD_PRELOAD/                          # LD_PRELOAD detection module
 │   ├── Makefile                         # Build configuration for LD_PRELOAD
 │   ├── bpf_ldpreload_detector.bpf.c     # eBPF program for injection detection
+│   ├── bpf_ldpreload_detector.o         # Compiled eBPF object
+│   ├── security_monitor                 # Security monitor executable
 │   ├── security_monitor.c               # User-space loader for LD_PRELOAD detection
-│   ├── malicious_preload.c              # Test malicious library
+│   ├── malicious_preload.c              # Test malicious library source
+│   ├── malicious_preload.so             # Compiled test malicious library
 │   └── vmlinux.h                        # Kernel headers
 ├── Makefile                             # Main build configuration
-├── bpf_toctou_detector.bpf.c            # eBPF program for TOCTOU detection
-├── toctou_loader.c                      # User-space loader for TOCTOU detection
-├── enhanced_toctou_test.c               # TOCTOU attack test suite
-├── test_framework.c                     # Comprehensive test framework
-├── monitoring_toctou.sh                 # Monitoring automation script
-└── run_toctou_tests.sh                  # Test runner script
+├── vmlinux.h                            # Shared kernel headers
+└── README.md                            # This documentation
 ```
 
 ## 🔧 System Requirements
@@ -124,123 +136,75 @@ cat /sys/kernel/security/lsm
 
 ## 🏗️ Compilation Instructions
 
-### TOCTOU Detection System (Root Directory)
+### Build All Modules
 
 ```bash
 # Navigate to project root
-cd ~/TOCTOU-lsm
+cd ebpf-runtime-guard
 
-# Generate kernel headers
-make clean
+# Build both modules
+make all
 
-# Build TOCTOU detection system
-make
-
-# This creates:
-# - bpf_toctou_detector.o (eBPF object)
-# - toctou_loader (user-space loader)
-# - enhanced_toctou_test (test program)
-# - test_framework (comprehensive test suite)
+# This creates executables in respective directories:
+# TOCTOU-lsm/toctou_loader, enhanced_toctou_test, test_framework
+# LD_PRELOAD/security_monitor, malicious_preload.so
 ```
 
-#### Manual Compilation (if needed):
-```bash
-# Generate vmlinux.h
-bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
-
-# Compile eBPF program
-clang -O2 -g -target bpf -D__TARGET_ARCH_x86 -I. -I/usr/include \
-    -c bpf_toctou_detector.bpf.c -o bpf_toctou_detector.o
-
-# Compile user-space loader
-gcc -Wall -O2 -o toctou_loader toctou_loader.c -lbpf
-
-# Compile test programs
-gcc -pthread -Wall -O2 -o enhanced_toctou_test enhanced_toctou_test.c
-gcc -pthread -Wall -O2 -o test_framework test_framework.c
-```
-
-### LD_PRELOAD Detection System
+### Build Individual Modules
 
 ```bash
-# Navigate to LD_PRELOAD directory
-cd ~/TOCTOU-lsm/LD_PRELOAD
+# Build only TOCTOU detection
+make toctou
 
-# Build LD_PRELOAD detection system
-make clean && make
+# Build only LD_PRELOAD detection  
+make ldpreload
 
-# This creates:
-# - bpf_ldpreload_detector.o (eBPF object)
-# - security_monitor (user-space loader)
-# - /tmp/malicious.so (test malicious library)
-```
-
-#### Manual Compilation:
-```bash
-# Generate vmlinux.h (if not present)
-bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
-
-# Compile eBPF program
-clang -O2 -g -target bpf -D__TARGET_ARCH_x86 -I. -I/usr/include \
-    -c bpf_ldpreload_detector.bpf.c -o bpf_ldpreload_detector.o
-
-# Compile security monitor
-gcc -Wall -O2 -o security_monitor security_monitor.c -lbpf
-
-# Compile malicious test library
-gcc -shared -fPIC -o /tmp/malicious.so malicious_preload.c -ldl
+# Generate kernel headers if needed
+make vmlinux
 ```
 
 ## 🚀 Usage Instructions
 
 ### TOCTOU Detection
 
-#### Basic Usage:
+Use the automated test target:
 ```bash
-# Terminal 1: Start TOCTOU detector
-sudo ./toctou_loader
-
-# Terminal 2: Run TOCTOU attack tests
-./enhanced_toctou_test
+make test-toctou
 ```
 
-#### Automated Testing:
-```bash
-# Run comprehensive test suite
-sudo ./run_toctou_tests.sh
+This displays instructions to:
+1. **Terminal 1**: Start the detector
+   ```bash
+   sudo ./TOCTOU-lsm/toctou_loader
+   ```
 
-# Or run individual test framework
-./test_framework
-```
+2. **Terminal 2**: Run attack tests
+   ```bash
+   ./TOCTOU-lsm/test_framework
+   ```
 
-#### Real-time Monitoring:
-```bash
-# Start monitoring with enhanced logging
-sudo ./monitoring_toctou.sh
-```
+3. **Alternative tests**:
+   ```bash
+   ./TOCTOU-lsm/enhanced_toctou_test
+   ```
 
 ### LD_PRELOAD Detection
 
-#### Basic Usage:
+Use the automated test target:
 ```bash
-# Terminal 1: Start LD_PRELOAD detector
-cd LD_PRELOAD
-sudo ./security_monitor
-
-# Terminal 2: Test LD_PRELOAD injection
-LD_PRELOAD=/tmp/malicious.so /bin/ls
-LD_PRELOAD=/tmp/malicious.so /usr/bin/whoami
+make test-ldpreload
 ```
 
-#### Testing Different Attack Scenarios:
-```bash
-# Test with suspicious library paths
-LD_PRELOAD=/tmp/evil.so /bin/cat /etc/passwd
-LD_PRELOAD=/dev/shm/rootkit.so /usr/bin/id
+This displays instructions to:
+1. **Terminal 1**: Start the monitor
+   ```bash
+   sudo ./LD_PRELOAD/security_monitor
+   ```
 
-# Test LD_LIBRARY_PATH manipulation
-LD_LIBRARY_PATH=/tmp:/dev/shm /bin/bash
-```
+2. **Terminal 2**: Run injection tests
+   ```bash
+   LD_PRELOAD=./LD_PRELOAD/malicious_preload.so /bin/ls
+   ```
 
 ## 📊 Monitoring Output
 
@@ -261,33 +225,27 @@ LD_LIBRARY_PATH=/tmp:/dev/shm /bin/bash
   PID: 12346 | UID: 1000
   Binary: /bin/ls
   Risk Level: CRITICAL (9/10)
-  🔍 LD_PRELOAD Library: /tmp/malicious.so
+  🔍 LD_PRELOAD Library: ./LD_PRELOAD/malicious_preload.so
   🚨 SHARED LIBRARY INJECTION DETECTED
   ⚠️ SUSPICIOUS PATH: Library in temporary directory!
 ```
 
 ## 🧪 Testing and Validation
 
-### Automated Test Execution:
-```bash
-# Test TOCTOU detection
-sudo ./run_toctou_tests.sh
+### Available Makefile Targets
 
-# Expected output: Multiple attack scenarios with detection alerts
-```
-
-### Manual Attack Simulation:
-```bash
-# Create test environment
-mkdir -p /tmp/test_attacks
-
-# Simulate TOCTOU attack
-echo '#!/bin/bash\necho "Original"' > /tmp/test_attacks/victim &
-sleep 0.1
-echo '#!/bin/bash\necho "COMPROMISED!"' > /tmp/test_attacks/victim &
-chmod +x /tmp/test_attacks/victim
-/tmp/test_attacks/victim
-```
+| Target              | Description                                 |
+|---------------------|---------------------------------------------|
+| `all`               | Build both TOCTOU and LD_PRELOAD modules   |
+| `toctou`            | Build TOCTOU detection module              |
+| `ldpreload`         | Build LD_PRELOAD detection module          |
+| `vmlinux`           | Generate kernel header file                 |
+| `test-toctou`       | Show TOCTOU attack test instructions       |
+| `test-ldpreload`    | Show LD_PRELOAD injection test instructions|
+| `install-toctou`    | Run TOCTOU detector                         |
+| `install-ldpreload` | Run LD_PRELOAD monitor                      |
+| `clean`             | Clean all build artifacts                   |
+| `help`              | Show all available targets                  |
 
 ### Kernel Log Monitoring:
 ```bash
@@ -312,8 +270,8 @@ sudo dmesg | tail -20 | grep -E "(TOCTOU|LSM)"
 2. **Permission Denied:**
    ```bash
    # Ensure running as root
-   sudo ./toctou_loader
-   sudo ./security_monitor
+   sudo ./TOCTOU-lsm/toctou_loader
+   sudo ./LD_PRELOAD/security_monitor
    ```
 
 3. **Compilation Errors:**
@@ -328,7 +286,7 @@ sudo dmesg | tail -20 | grep -E "(TOCTOU|LSM)"
 4. **Verifier Errors:**
    ```bash
    # Check eBPF program with verbose output
-   sudo bpftool prog load bpf_toctou_detector.o /sys/fs/bpf/toctou_prog
+   sudo bpftool prog load TOCTOU-lsm/bpf_toctou_detector.o /sys/fs/bpf/toctou_prog
    ```
 
 ### Debug Commands:
@@ -365,7 +323,7 @@ sudo bpftrace -e 'tracepoint:bpf:*'
 
 ## 📝 License
 
-This project is released under the MIT License. See LICENSE file for details.
+This project is released under the Apache License 2.0. See LICENSE file for details.
 
 ## 🤝 Contributing
 

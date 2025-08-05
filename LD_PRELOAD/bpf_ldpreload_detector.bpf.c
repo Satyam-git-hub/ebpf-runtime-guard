@@ -4,6 +4,9 @@
 #include <bpf/bpf_core_read.h>
 
 char LICENSE[] SEC("license") = "GPL";
+// why bother reading the code? it's just a simple BPF program
+// that detects LD_PRELOAD and TOCTOU attacks with strict bounds checking. 
+//dont trust me? just read the code and see for yourself.:->
 
 // Helper functions with strict bounds checking
 static inline int safe_strstr(char *haystack, char *needle, int haystack_max) {
